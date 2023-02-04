@@ -1,15 +1,22 @@
 # inspired by Prof. moshe sipper, BGU
 import random
+
 THREE_SAT_SIZE = 1000 #number of clauses
 POP_SIZE = 1000 #number of individuals
 N = 500 #number of variables
-GENERATIONS = 250 #number of generations
-TOURNAMENT_SIZE = 20 #number of individuals to pick from the population
-MUTATION_PROB = 0.5 #the probability for mautation
-MUTATION_TRESHOLD = 40 #the minimal gen to start mutating from.
-
+GENERATIONS = 200 #number of generations
+TOURNAMENT_SIZE = 100 #number of individuals to pick from the population
+MUTATION_PROB = 1 #the probability for mautation
+MUTATION_TRESHOLD = 30 #the minimal gen to start mutating from.
+ITERATIONS = 10 #number of iterations.
 def randimize_t_f():
     return (random.uniform(0,1) < 0.5)
+
+def randomize_individaul():
+    return [randimize_t_f() for i in range(N)]
+
+def randomize_population():
+    return [randomize_individaul() for i in range(POP_SIZE)]
 
 def smart_individual(index, default):
     res = []
@@ -30,11 +37,7 @@ def smart_population():
         res.append(randomize_individaul())
     return res
 
-def randomize_individaul():
-    return [randimize_t_f() for i in range(N)]
 
-def randomize_population():
-    return [randomize_individaul() for i in range(POP_SIZE)]
 
 def randomize_3sat():
     res = []
@@ -83,36 +86,42 @@ def crossover(parent1, parent2):
     return son
 
 def main():
-    population = smart_population()
     sat = randomize_3sat()
-    fitnesses = [fitness(population[i],sat) for i in range(POP_SIZE)]
-    best_of_run_gen = -1
-    best_of_run = population[fitnesses.index(max(fitnesses))]
-    best_of_run_fitness = max(fitnesses)
-    for gen in range(GENERATIONS):
-        print("----------Genertaion",gen,"-------")
-        nextgen_population = []
-        # elitism
-        nextgen_population.append(best_of_run)
-        for i in range(POP_SIZE-1):
-            parent1 = selection(population, fitnesses)
-            parent2 = selection(population, fitnesses)
-            child = crossover(parent1,parent2)
-            if (random.uniform(0,1) < MUTATION_PROB and gen>MUTATION_TRESHOLD):
-                child = mutation(child)
-            nextgen_population.append(child)
-        population = nextgen_population
-        fitnesses = [fitness(population[i],sat) for i in range(POP_SIZE)]
-        if max(fitnesses) > best_of_run_fitness:
-            best_of_run_gen = gen
-            best_of_run = population[fitnesses.index(max(fitnesses))]
-            best_of_run_fitness = max(fitnesses)
-            print("_________Improvement Achieved!_______________")
-            print("gen:", best_of_run_gen, ", best_of_run_f:", best_of_run_fitness)
-            if best_of_run_fitness == 1: break
-    print("_________End Of Evolution!_______________")
-    print("_________best results:_______________")
-    print("gen:", best_of_run_gen, ", best_of_run_f:", best_of_run_fitness, "individual: ", best_of_run)
+    results = []
+    for i in range (ITERATIONS):
+        population = randomize_population()
+        fitnesses = [fitness(population[i], sat) for i in range(POP_SIZE)]
+        best_of_run_gen = -1
+        best_of_run = population[fitnesses.index(max(fitnesses))]
+        best_of_run_fitness = max(fitnesses)
+        print("----------Iteration ", i)
+        for gen in range(GENERATIONS):
+            print("----------Genertaion",gen,"-------")
+            nextgen_population = []
+            # elitism
+            nextgen_population.append(best_of_run)
+            for i in range(POP_SIZE-1):
+                parent1 = selection(population, fitnesses)
+                parent2 = selection(population, fitnesses)
+                child = crossover(parent1,parent2)
+                if (random.uniform(0,1) < MUTATION_PROB and gen>MUTATION_TRESHOLD):
+                    child = mutation(child)
+                nextgen_population.append(child)
+            population = nextgen_population
+            fitnesses = [fitness(population[i],sat) for i in range(POP_SIZE)]
+            if max(fitnesses) > best_of_run_fitness:
+                best_of_run_gen = gen
+                best_of_run = population[fitnesses.index(max(fitnesses))]
+                best_of_run_fitness = max(fitnesses)
+                print("_________Improvement Achieved!_______________")
+                print("gen:", best_of_run_gen, ", best_of_run_f:", best_of_run_fitness)
+                if best_of_run_fitness == 1: break
+        print("_________End Of Evolution!_______________")
+        print("_________best results:_______________")
+        print("gen:", best_of_run_gen, ", best_of_run_f:", best_of_run_fitness, "individual: ", best_of_run)
+        results.append([best_of_run_gen, best_of_run_fitness])
+    for i in range (ITERATIONS):
+        print("Iteration ", i, ", Gen: ", results[i][0], ", Fitness: ", results[i][1])
 
 if __name__ == "__main__":
     main()
